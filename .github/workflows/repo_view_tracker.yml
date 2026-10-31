@@ -24,12 +24,16 @@ jobs:
       - name: Install Dependencies
         run: pip install PyGithub
 
+      # ... (previous code remains exactly the same) ...
+
       - name: Run the Tracker Script
         env:
-          # Using standard GITHUB_TOKEN instead of a Personal Access Token (PAT)
-          # This prevents issues with expiring secrets or setup headaches!
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Change this line to use your newly added Personal Access Token
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         run: python repo_view_tracker.py
+
+      # ... (rest of the push/commit code remains exactly the same) ...
+
         
       - name: Commit and Push Updated View Counts
         run: |
