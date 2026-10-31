@@ -1,12 +1,11 @@
 import os
 import json
-from github import Github, GithubException
+from github import Github
 
 # --- Configuration ---
-
-# List of your repositories in 'username/repository_name' format
+# MUST be in 'username/repository_name' format
 REPOSITORIES_TO_TRACK = [
-    "PowerBI"
+    "om1002/PowerBI"  # <-- Change YOUR_GITHUB_USERNAME to your actual username
 ]
 DATA_FILE = "repo_views.json"
 
@@ -17,8 +16,7 @@ def load_view_counts():
             with open(DATA_FILE, 'r') as f:
                 return json.load(f)
         except json.JSONDecodeError:
-            print(f"Warning: '{DATA_FILE}' contains invalid JSON. Starting with empty counts.")
-            return {}
+            print(f"Warning: '{DATA_FILE}' contains invalid JSON. Starting fresh.")
     return {}
 
 def save_view_counts(counts):
@@ -30,56 +28,71 @@ def get_repository_views(repo_full_name, g):
     try:
         repo = g.get_repo(repo_full_name)
         traffic = repo.get_views_traffic()
+        
+        # Extract daily breakdown data instead of just the total sum
+        daily_data = {}
         if traffic and hasattr(traffic, 'views'):
-            return sum(view.count for view in traffic.views)
-        else:
-            return None
+            for view in traffic.views:
+                # Convert datetime object to string key "YYYY-MM-DD"
+                date_str = view.timestamp.strftime("%Y-%m-%d")
+                daily_data[date_str] = {
+                    "count": view.count,
+                    "uniques": view.uniques
+                }
+        return daily_data
     except Exception as e:
-        print(f"Error for {repo_full_name}: {e}")
+        print(f"Error fetching data for {repo_full_name}: {e}")
         return None
 
 def main():
+    token = os.getenv("GITHUB_TOKEN")
+    if not token:
+        print("Error: GITHUB_TOKEN environment variable is missing.")
+        return
+
     print("Connecting to GitHub...")
-    g = Github(os.getenv("GITHUB_TOKEN"))  # Use GitHub Actions token
-    print(f"Successfully authenticated as: {g.get_user().login}")
+    g = Github(token)
 
     view_counts = load_view_counts()
     updated_any_repo = False
 
     for repo_full_name in REPOSITORIES_TO_TRACK:
         print(f"Processing: {repo_full_name}")
-        current_views = get_repository_views(repo_full_name, g)
+        
+        # Get raw daily breakdown from last 14 days
+        api_daily_views = get_repository_views(repo_full_name, g)
 
-        if current_views is not None:
+        if api_daily_views:
             if repo_full_name not in view_counts:
                 view_counts[repo_full_name] = {
-                    "total_views_last_14_days": 0,
-                    "last_recorded_total": 0,
-                    "views_diff_last_run": 0,
+                    "daily_history": {},
                     "cumulative_views": 0
                 }
+            
+            # Ensure modern key structure exists if migrating from your old format
+            if "daily_history" not in view_counts[repo_full_name]:
+                view_counts[repo_full_name]["daily_history"] = {}
 
-            last_total = view_counts[repo_full_name].get("total_views_last_14_days", 0)
-            diff = current_views - last_total
+            history = view_counts[repo_full_name]["daily_history"]
 
-            view_counts[repo_full_name]["total_views_last_14_days"] = current_views
-            view_counts[repo_full_name]["last_recorded_total"] = last_total
-            view_counts[repo_full_name]["views_diff_last_run"] = diff
-            view_counts[repo_full_name].setdefault("cumulative_views", 0) #if want to keep track of count from today
-            # view_counts[repo_full_name].setdefault("cumulative_views", current_views) #if want to keep track of count from last 14 days views
-            view_counts[repo_full_name]["cumulative_views"] += max(0, diff)
+            # Merge new daily data into our permanent historical storage
+            for date_str, metrics in api_daily_views.items():
+                history[date_str] = metrics  # Overwrites/updates with latest exact stats for that day
 
-            print(f"  Updated {repo_full_name}: {current_views} views (last 14 days). Diff: {diff}")
+            # Calculate total cumulative views from all historical daily records safely
+            total_historical = sum(day["count"] for day in history.values())
+            view_counts[repo_full_name]["cumulative_views"] = total_historical
+            
+            print(f"  Updated {repo_full_name}. Lifetime Cumulative Views recorded: {total_historical}")
             updated_any_repo = True
 
     if updated_any_repo or not os.path.exists(DATA_FILE):
         print(f"\nSaving updated view counts to '{DATA_FILE}'...")
         save_view_counts(view_counts)
 
-    print("\n--- Current Repository View Statistics (Last 14 Days) ---")
+    print("\n--- Current Cumulative Repository Statistics ---")
     for repo, data in view_counts.items():
-        print(f"{repo}: {data.get('total_views_last_14_days')} views, Diff: {data.get('views_diff_last_run')}, Cumulative: {data.get('cumulative_views')}")
+        print(f"{repo}: Total Lifetime Views logged -> {data.get('cumulative_views')}")
 
 if __name__ == "__main__":
     main()
-
