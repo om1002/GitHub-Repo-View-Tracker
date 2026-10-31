@@ -6,22 +6,7 @@ from github import Github, GithubException
 
 # List of your repositories in 'username/repository_name' format
 REPOSITORIES_TO_TRACK = [
-    "Pritz69/LeetCode-Solutions",
-    "Pritz69/GFG_POTD",
-    "Pritz69/GitHub-Repo-View-Tracker",
-    "Pritz69/UNFOLLOW-GITHUB-USERS-WHO-DONT-FOLLOW-US",
-    "Pritz69/EmployeeManagementSystem-FULL-STACK-CRUD",
-    "Pritz69/Newton-School-POTD",
-    "Pritz69/5011251",
-    "Pritz69/Portfolio_Website",
-    "Pritz69/LeetCode-JS-30DaysChallenge",
-    "Pritz69/Calculator",
-    "Pritz69/Music_Player",
-    "Pritz69/MemoryGame",
-    "Pritz69/Terminal_Portfolio",
-    "Pritz69/MovieRecommenderSite",
-    "Pritz69/MAFSMBMDDPWI-FYP-2025",
-    "Pritz69/Wine_Quality_Prediction_ML"
+    "PowerBI"
 ]
 DATA_FILE = "repo_views.json"
 
