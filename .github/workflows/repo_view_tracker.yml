@@ -2,40 +2,48 @@ name: GitHub Repo View Tracker
 
 on:
   schedule:
-    - cron: '0 0 */2 * *' # Every 2 days
+    - cron: '0 0 * * *' # Highly recommended to run daily so you never miss data gaps
   workflow_dispatch:
+
+# 🟢 CRITICAL: This grants permission to commit the JSON updates back to your repo
+permissions:
+  contents: write
 
 jobs:
   update-views:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4 # Upgraded to latest secure runner version
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5 # Upgraded to latest runner version
         with:
-          python-version: 3.9
+          python-version: '3.11'
 
       - name: Install Dependencies
         run: pip install PyGithub
 
       - name: Run the Tracker Script
         env:
-          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          # Using standard GITHUB_TOKEN instead of a Personal Access Token (PAT)
+          # This prevents issues with expiring secrets or setup headaches!
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python repo_view_tracker.py
         
       - name: Commit and Push Updated View Counts
-        if: success()
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Use your specific GitHub account profile info for the commit log
           git config --global user.name "om1002"
           git config --global user.email "your-email@example.com"
-          git add repo_views.json
-          git commit -m "Update repo view counts (Automated)" || echo "No changes to commit"
-
           
-          git remote set-url origin https://github-actions[bot]:${{ secrets.GITHUB_TOKEN }}@github.com/om1002/GitHub-Repo-View-Tracker2.git
-          git push origin main
-
+          # Only attempt a push if the repo_views.json file actually changed
+          if git status --porcelain | grep -q "repo_views.json"; then
+            git add repo_views.json
+            git commit -m "Update repo view counts (Automated) [skip ci]"
+            
+            # Clean, modern push command using the runner's native authentication
+            git push origin HEAD:main
+          else
+            echo "No traffic changes found today. Skipping commit."
+          fi
