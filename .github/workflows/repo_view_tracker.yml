@@ -30,12 +30,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git config --global user.name "Pritz69"
+          git config --global user.name "om1002"
           git config --global user.email "your-email@example.com"
           git add repo_views.json
           git commit -m "Update repo view counts (Automated)" || echo "No changes to commit"
 
           
-          git remote set-url origin https://github-actions[bot]:${{ secrets.GITHUB_TOKEN }}@github.com/Pritz69/GitHub-Repo-View-Tracker.git
+          git remote set-url origin https://github-actions[bot]:${{ secrets.GITHUB_TOKEN }}@github.com/om1002/GitHub-Repo-View-Tracker2.git
           git push origin main
 
