@@ -29,7 +29,7 @@ jobs:
       - name: Run the Tracker Script
         env:
           # Change this line to use your newly added Personal Access Token
-          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT}}
         run: python repo_view_tracker.py
 
       # ... (rest of the push/commit code remains exactly the same) ...
