@@ -144,6 +144,14 @@
             "2026-11-21": {
                 "count": 0,
                 "uniques": 0
+            },
+            "2026-11-22": {
+                "count": 0,
+                "uniques": 0
+            },
+            "2026-11-23": {
+                "count": 0,
+                "uniques": 0
             }
         },
         "cumulative_views": 13
